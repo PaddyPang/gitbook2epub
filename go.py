@@ -103,6 +103,15 @@ def backup_and_rename_file(file_path):
     print("backup_file_name:", backup_file_name)
 
 
+def get_proxy():
+    if os.getenv("PROXY_ON") == "ON":
+        return {
+            'http': os.getenv("PROXY_HTTP"),
+            'https': os.getenv("PROXY_HTTP"),
+        }
+    return None
+
+
 def main():
     bookTitle = input("请输入书籍名称：")
     if not bookTitle:
@@ -126,19 +135,25 @@ def main():
     }
 
     guide_file = os.path.join(base_dir, './SUMMARY.md')
-    cover = os.path.join(base_dir, './res/images/cover.jpg')
     style = os.path.join(base_dir, './res/css/style.css')
+    cover = os.path.join(base_dir, './res/images/cover.jpg')
     bookFile = os.path.join(base_dir, "out", bookTitle + '.epub')
+    os.makedirs(cover.split('cover.jpg')[0], exist_ok=True)
 
     bookObj = mkepub.Book(title=bookTitle, author=bookAuthors)
 
     if not os.path.exists(cover):
         print("未查到封面, 等待下载新封面...")
-        url = "https://api.unsplash.com/photos/random"
-        response = requests.get(url, params=unsplash_params)
+        response = requests.get(
+            "https://api.unsplash.com/photos/random",
+            params=unsplash_params,
+            proxies=get_proxy()
+        )
         if response.status_code == 200:
-            images_info = response.json()
-            response = requests.get(images_info[0]["urls"]['thumb'])
+            response = requests.get(
+                response.json()[0]["urls"]['thumb'],
+                proxies=get_proxy()
+            )
             if response.status_code == 200:
                 with open(cover, "wb") as f:
                     f.write(response.content)
