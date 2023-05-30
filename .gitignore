@@ -1,0 +1,7 @@
+.env
+.coveragerc
+.travis.yml
+__pycache__/
+out/
+books/*
+!books/example/
